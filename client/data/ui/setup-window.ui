@@ -1,6 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <object class="GtkLabel" id="test_label">
-    <property name="label">Test Label</property>
+  <object class="GtkGrid" id="root_grid">
+    <property name="column-spacing">12</property>
+    <property name="row-spacing">12</property>
+
+    <property name="margin-top">12</property>
+    <property name="margin-bottom">12</property>
+    <property name="margin-start">12</property>
+    <property name="margin-end">12</property>
+
+    <property name="width-request">400</property>
+
+    <property name="halign">fill</property>
+    <property name="hexpand">TRUE</property>
+    <property name="vexpand">TRUE</property>
+
+    <child>
+      <object class="GtkLabel">
+        <property name="label">Enter the details of the server and yourself</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">0</property>
+          <property name="column-span">4</property>
+        </layout>
+      </object>
+    </child>
+    
+    <child>
+      <object class="GtkLabel">
+        <property name="label">Server IP</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">1</property>
+        </layout>
+      </object>
+    </child>
+    
+    <child>
+      <object class="GtkLabel">
+        <property name="label">Nickname</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="row">2</property>
+        </layout>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkLabel" id="connstatus_label">
+        <layout>
+          <property name="column">1</property>
+          <property name="row">3</property>
+          <property name="column-span">2</property>
+        </layout>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkEntry" id="server_addr_entry">
+        <property name="hexpand">true</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="row">1</property>
+          <property name="column-span">3</property>
+        </layout>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkEntry" id="nickname_entry">
+        <property name="hexpand">true</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="row">2</property>
+          <property name="column-span">3</property>
+        </layout>
+      </object>
+    </child>
+
+    <child>
+      <object class="GtkButton" id="connect_button">
+        <property name="valign">center</property>
+        <property name="halign">end</property>
+        <property name="label">Connect</property>
+        <layout>
+          <property name="column">3</property>
+          <property name="row">3</property>
+        </layout>
+      </object>
+    </child>
+
   </object>
 </interface>
