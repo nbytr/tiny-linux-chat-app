@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="GtkLabel" id="test_label">
+    <property name="label">Test Label</property>
+  </object>
+</interface>
