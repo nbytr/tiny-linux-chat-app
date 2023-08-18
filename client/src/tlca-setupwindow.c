@@ -38,14 +38,10 @@ connection_attempt_done (GObject *source_object, GAsyncResult *res, gpointer use
 
   if (conn == NULL) {
     gtk_label_set_text (self->connstatus_label, "Failed to connect!");
-    g_object_unref (source_object);
     return;
   }
 
   gtk_label_set_text (self->connstatus_label, "Connected successfully!");
-
-  g_object_unref (source_object);
-
 }
 
 static void
@@ -70,6 +66,8 @@ attempt_connection (GtkWidget *widget, gpointer user_data)
       connection_attempt_done, self);
 
   gtk_label_set_text (self->connstatus_label, "Attempting connection...");
+
+  g_object_unref (client);
 }
 
 static void
