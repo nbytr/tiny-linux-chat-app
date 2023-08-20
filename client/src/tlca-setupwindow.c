@@ -1,3 +1,5 @@
+#include "tlca-application.h"
+
 #include "tlca-setupwindow.h"
 
 struct _TlcaSetupWindow
@@ -42,6 +44,10 @@ connection_attempt_done (GObject *source_object, GAsyncResult *res, gpointer use
   }
 
   gtk_label_set_text (self->connstatus_label, "Connected successfully!");
+
+  TlcaApplication *app = TLCA_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
+
+  g_signal_emit_by_name (app, "connection_made", conn);
 }
 
 static void
