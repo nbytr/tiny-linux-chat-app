@@ -8,7 +8,7 @@ static void
 obtain_server_socket (TlcaServer *server)
 {
   // Obtain string representation of port
-  char *portstr = calloc ((server->listening_port > 9999) ? 6 : 5, 1);
+  char *portstr = calloc (floor (log10 (server->listening_port) + 1) + 1, 1);
   sprintf (portstr, "%d", server->listening_port);
   // Create server socket
 
