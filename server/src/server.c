@@ -91,7 +91,7 @@ obtain_server_socket (TlcaServer *server)
   server->server_sock = server_sock;
 }
 
-static int
+static void
 obtain_epoll_instance (TlcaServer *server)
 {
 }

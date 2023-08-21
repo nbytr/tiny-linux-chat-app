@@ -11,6 +11,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <sys/epoll.h>
+
 #include <errno.h>
 
 typedef struct
