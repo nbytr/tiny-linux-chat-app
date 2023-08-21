@@ -12,6 +12,16 @@ struct _TlcaMainWindow
 
 G_DEFINE_TYPE (TlcaMainWindow, tlca_main_window, GTK_TYPE_APPLICATION_WINDOW)
 
+static void
+read_data (GSocket *socket, GIOCondition condition, gpointer data)
+{
+  gchar buffer[128];
+
+  g_socket_receive (socket, buffer, 128, NULL, NULL);
+
+  g_print ("Recieved from server: %s\n", buffer);
+}
+
 typedef enum
 {
   PROP_NICKNAME = 1,
@@ -30,6 +40,15 @@ tlca_main_window_constructed (GObject *object)
   g_string_append (tmp, self->nickname);
 
   gtk_label_set_text (self->nickname_label, tmp->str);
+
+  GSource *sock_source;
+  sock_source = g_socket_create_source (g_socket_connection_get_socket (self->conn),
+                                        G_IO_IN, NULL);
+
+  g_source_set_callback (sock_source, G_SOURCE_FUNC (read_data), self, NULL);
+
+  g_source_attach (sock_source, NULL);
+
 
   G_OBJECT_CLASS (tlca_main_window_parent_class)->constructed (object);
 }
