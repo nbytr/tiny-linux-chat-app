@@ -94,6 +94,26 @@ obtain_server_socket (TlcaServer *server)
 static void
 obtain_epoll_instance (TlcaServer *server)
 {
+  int epollfd;
+  epollfd = epoll_create1 (0);
+
+  if (epollfd == -1) {
+    server->err = 4;
+    server->errcode = errno;
+    return;
+  }
+
+  struct epoll_event server_event;
+  server_event.events = EPOLLIN;
+  server_event.data.fd = server->server_sock;
+
+  if (epoll_ctl (epollfd, EPOLL_CTL_ADD, server->server_sock, &server_event) == -1) {
+    server->err = 5;
+    server->errcode = errno;
+    return;
+  }
+
+  server->epoll_fd = epollfd;
 }
 
 TlcaServer *
@@ -124,32 +144,42 @@ tlca_server_run (TlcaServer *server)
   struct sockaddr_storage client_addr;
   socklen_t client_addr_len = sizeof (client_addr);
   int client_sock = -1;
+
+  int nfds;
+  struct epoll_event events [MAX_EVENTS];
+
   for (;;) {
     // Block until a connection is made
-    if ((client_sock = accept (server->server_sock, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
-      server->err = 4;
-      server->errcode = errno;
-      fprintf (stderr, "Failed to accept(): %s\n", strerror(errno));
-      continue;
-    }
-    printf ("Got connection");
+    nfds = epoll_wait (server->epoll_fd, events, MAX_EVENTS, -1);
 
-    // Output the client's address
-    if (client_addr.ss_family == AF_INET) {
-      struct in_addr *addr = &(((struct sockaddr_in *)&client_addr)->sin_addr);
-      char straddr[INET_ADDRSTRLEN];
-      memset (straddr, 0, INET_ADDRSTRLEN);
-      inet_ntop (AF_INET, addr, straddr, INET_ADDRSTRLEN);
-      printf (" from %s\n", straddr);
-    } else {
-      struct in6_addr *addr = &(((struct sockaddr_in6 *)&client_addr)->sin6_addr);
-      char straddr[INET6_ADDRSTRLEN];
-      memset (straddr, 0, INET6_ADDRSTRLEN);
-      inet_ntop (AF_INET6, addr, straddr, INET6_ADDRSTRLEN);
-      printf (" from %s\n", straddr);
+    for (int i = 0; i < nfds; ++i)
+    {
+      // A connection is ready to be accepted
+      if (events[i].data.fd == server->server_sock) {
+        // Attempt to accept the connection
+        if ((client_sock = accept (server->server_sock, (struct sockaddr *)&client_addr, &client_addr_len)) == -1) {
+          continue;
+        }
+        printf ("Got connection");
+
+        // Output the client's address
+        if (client_addr.ss_family == AF_INET) {
+          struct in_addr *addr = &(((struct sockaddr_in *)&client_addr)->sin_addr);
+          char straddr[INET_ADDRSTRLEN];
+          memset (straddr, 0, INET_ADDRSTRLEN);
+          inet_ntop (AF_INET, addr, straddr, INET_ADDRSTRLEN);
+          printf (" from %s\n", straddr);
+        } else {
+          struct in6_addr *addr = &(((struct sockaddr_in6 *)&client_addr)->sin6_addr);
+          char straddr[INET6_ADDRSTRLEN];
+          memset (straddr, 0, INET6_ADDRSTRLEN);
+          inet_ntop (AF_INET6, addr, straddr, INET6_ADDRSTRLEN);
+          printf (" from %s\n", straddr);
+        }
+        // Send a small message, and close the connnection
+        send (client_sock, "Hello!", 6, 0);
+        close (client_sock);
+      }
     }
-    // Send a small message, and close the connnection
-    send (client_sock, "Hello!", 6, 0);
-    close (client_sock);
   }
 }
