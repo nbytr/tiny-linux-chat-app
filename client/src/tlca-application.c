@@ -1,11 +1,14 @@
 #include "tlca-application.h"
+
 #include "tlca-setupwindow.h"
+#include "tlca-mainwindow.h"
 
 struct _TlcaApplication
 {
   GtkApplication parent_instance;
 
   TlcaSetupWindow *setup_window;
+  TlcaMainWindow *main_window;
 };
 
 G_DEFINE_TYPE (TlcaApplication, tlca_application, GTK_TYPE_APPLICATION);
@@ -24,7 +27,7 @@ tlca_application_class_init (TlcaApplicationClass *klass)
 {
   G_APPLICATION_CLASS (klass)->activate = tlca_application_activate;
 
-  GType signal_types[] = {G_TYPE_SOCKET_CONNECTION};
+  GType signal_types[] = {G_TYPE_STRING, G_TYPE_SOCKET_CONNECTION};
 
   g_signal_newv ("connection_made",
       G_TYPE_FROM_CLASS (klass),
@@ -34,22 +37,20 @@ tlca_application_class_init (TlcaApplicationClass *klass)
       NULL,
       NULL,
       G_TYPE_NONE,
-      1,
+      2,
       signal_types);
 }
 
 static void
-tlca_application_connection_made (TlcaApplication *app,
-                                   gpointer user_data)
+tlca_application_connection_made (TlcaApplication *self,
+                                   GString *nickname, GSocketConnection *conn)
 {
-  g_print ("Application alerted that connection was made!\n");
+  gtk_window_destroy (GTK_WINDOW (self->setup_window));
 
-  GSocketConnection *conn = G_SOCKET_CONNECTION (user_data);
+  self->main_window = tlca_main_window_new (GTK_APPLICATION (self), nickname->str,
+      conn);
 
-  if (g_socket_connection_is_connected (conn) == TRUE) 
-    g_print ("Connected!");
-  else
-   g_print ("Not connected!");
+  gtk_window_present (GTK_WINDOW (self->main_window));
 }
 
 static void

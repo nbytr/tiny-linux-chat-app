@@ -8,6 +8,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (TlcaMainWindow, tlca_main_window, TLCA, MAIN_WINDOW, GtkApplicationWindow)
 
 TlcaMainWindow *
-tlca_main_window_new (GtkApplication *app, GSocketConnection *conn);
+tlca_main_window_new (GtkApplication *app, const char *nickname, GSocketConnection *conn);
 
 G_END_DECLS

@@ -47,7 +47,7 @@ connection_attempt_done (GObject *source_object, GAsyncResult *res, gpointer use
 
   TlcaApplication *app = TLCA_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
 
-  g_signal_emit_by_name (app, "connection_made", conn);
+  g_signal_emit_by_name (app, "connection_made", self->nickname, conn);
 }
 
 static void
@@ -62,8 +62,6 @@ attempt_connection (GtkWidget *widget, gpointer user_data)
   const char *server_addr = gtk_entry_buffer_get_text (server_addr_buffer);
   GString *nickname = g_string_new (gtk_entry_buffer_get_text (nickname_buffer));
   self->nickname = nickname;
-
-  g_print ("Got addr: %s\nnickname: %s\n", server_addr, nickname->str);
 
   GSocketClient *client;
   client = g_socket_client_new ();
@@ -92,6 +90,7 @@ tlca_setup_window_init (TlcaSetupWindow *self)
   g_signal_connect (self->connect_button, "clicked", G_CALLBACK (attempt_connection), self);
 
   gtk_window_set_title (GTK_WINDOW (self), "Connect");
+  gtk_window_set_resizable (GTK_WINDOW (self), FALSE);
   gtk_window_set_child (GTK_WINDOW (self), GTK_WIDGET (self->root_grid));
 }
 
