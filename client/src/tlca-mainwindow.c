@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+
 #include "tlca-mainwindow.h"
 
 struct _TlcaMainWindow
@@ -20,11 +22,48 @@ G_DEFINE_TYPE (TlcaMainWindow, tlca_main_window, GTK_TYPE_APPLICATION_WINDOW)
 static void
 read_data (GSocket *socket, GIOCondition condition, gpointer data)
 {
+  TlcaMainWindow *self = TLCA_MAIN_WINDOW (data);
+
   gchar buffer[128];
 
-  g_socket_receive (socket, buffer, 128, NULL, NULL);
+  int bytes_received = g_socket_receive (socket, buffer, 128, NULL, NULL);
+
+  GtkTextBuffer *textbuffer;
+  textbuffer = gtk_text_view_get_buffer (self->msg_textview);
+
+  gtk_text_buffer_insert_at_cursor(textbuffer, buffer, bytes_received);
 
   g_print ("Recieved from server: %s\n", buffer);
+}
+
+static void
+send_message (GtkWidget *widget, gpointer user_data)
+{
+  TlcaMainWindow *self = TLCA_MAIN_WINDOW (user_data);
+
+  GString *tmp;
+  tmp = g_string_new (self->nickname);
+
+  g_string_append (tmp, ": ");
+
+  const char *msg =
+    gtk_entry_buffer_get_text (gtk_entry_get_buffer (self->msg_entry));
+
+  g_string_append (tmp, msg);
+  g_string_append (tmp, "\n");
+
+  g_print ("Sending: %s\n", tmp->str);
+
+  GOutputStream *ostream;
+  ostream = g_io_stream_get_output_stream (G_IO_STREAM (self->conn));
+
+  uint16_t length = tmp->len;
+  uint16_t length_n = htons (length);
+
+  g_print ("Sending length: %d\n", length_n);
+
+  g_output_stream_write_all (ostream, &length_n, 2, NULL, NULL, NULL);
+  g_output_stream_write_all (ostream, tmp->str, tmp->len, NULL, NULL, NULL);
 }
 
 typedef enum
@@ -137,6 +176,9 @@ tlca_main_window_init (TlcaMainWindow *self)
   self->send_button = GTK_BUTTON (gtk_builder_get_object (self->builder, "send_button"));
 
   gtk_text_view_set_cursor_visible (self->msg_textview, FALSE);
+  gtk_entry_set_max_length (self->msg_entry, 128);
+  g_signal_connect (self->send_button, "clicked", G_CALLBACK (send_message), self);
+
   gtk_window_set_child (GTK_WINDOW (self), GTK_WIDGET (self->root_grid));
   gtk_window_set_title (GTK_WINDOW (self), "Chat");
 }

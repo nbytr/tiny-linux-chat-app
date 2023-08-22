@@ -174,9 +174,27 @@ tlca_server_run (TlcaServer *server)
           inet_ntop (AF_INET6, addr, straddr, INET6_ADDRSTRLEN);
           printf (" from %s\n", straddr);
         }
-        // Send a small message, and close the connnection
+        // Send a small message
         send (client_sock, "Hello!", 6, 0);
-        close (client_sock);
+
+        // Add the socket to the epoll instance
+        struct epoll_event client_event;
+        client_event.events = EPOLLIN;
+        client_event.data.fd = client_sock;
+
+        epoll_ctl (server->epoll_fd, EPOLL_CTL_ADD, client_sock, &client_event);
+      } else {
+        printf ("Received message!\n");
+        uint16_t length = 0;
+
+        recv (events[i].data.fd, &length, 2, 0);
+
+        length = ntohs (length);
+
+        char *msg = (char *)calloc (length + 1, 1);
+        recv (events[i].data.fd, msg, length, 0);
+
+        printf ("Recieved: %s\n", msg);
       }
     }
   }
