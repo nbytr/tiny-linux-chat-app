@@ -2,5 +2,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <gresource prefix="/org/tlca/client">
     <file preprocess="xml-stripblanks">ui/setup-window.ui</file>
+    <file preprocess="xml-stripblanks">ui/main-window.ui</file>
   </gresource>
 </gresources>

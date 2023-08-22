@@ -7,7 +7,12 @@ struct _TlcaMainWindow
   const char *nickname;
   GSocketConnection *conn;
 
-  GtkLabel *nickname_label;
+  GtkBuilder *builder;
+  GtkGrid *root_grid;
+  GtkLabel *status_label;
+  GtkTextView *msg_textview;
+  GtkEntry *msg_entry;
+  GtkButton *send_button;
 };
 
 G_DEFINE_TYPE (TlcaMainWindow, tlca_main_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -39,7 +44,7 @@ tlca_main_window_constructed (GObject *object)
   GString *tmp = g_string_new ("Connected as: ");
   g_string_append (tmp, self->nickname);
 
-  gtk_label_set_text (self->nickname_label, tmp->str);
+  gtk_label_set_text (self->status_label, tmp->str);
 
   GSource *sock_source;
   sock_source = g_socket_create_source (g_socket_connection_get_socket (self->conn),
@@ -121,10 +126,19 @@ tlca_main_window_class_init (TlcaMainWindowClass *klass)
 static void
 tlca_main_window_init (TlcaMainWindow *self)
 {
-  gtk_window_set_title (GTK_WINDOW (self), "Chat");
+  self->builder = gtk_builder_new_from_resource ("/org/tlca/client/ui/main-window.ui");
 
-  self->nickname_label = GTK_LABEL (gtk_label_new (""));
-  gtk_window_set_child (GTK_WINDOW (self), GTK_WIDGET (self->nickname_label));
+  self->root_grid = GTK_GRID (gtk_builder_get_object (self->builder, "root_grid"));
+
+  self->status_label = GTK_LABEL (gtk_builder_get_object (self->builder, "status_label"));
+  self->msg_textview = GTK_TEXT_VIEW (gtk_builder_get_object (self->builder, "msg_textview"));
+
+  self->msg_entry = GTK_ENTRY (gtk_builder_get_object (self->builder, "msg_entry"));
+  self->send_button = GTK_BUTTON (gtk_builder_get_object (self->builder, "send_button"));
+
+  gtk_text_view_set_cursor_visible (self->msg_textview, FALSE);
+  gtk_window_set_child (GTK_WINDOW (self), GTK_WIDGET (self->root_grid));
+  gtk_window_set_title (GTK_WINDOW (self), "Chat");
 }
 
 TlcaMainWindow *
