@@ -24,7 +24,7 @@ obtain_server_socket (TlcaServer *server)
   hints.ai_flags = AI_PASSIVE;
 
   if ((result = getaddrinfo (NULL, portstr, &hints, &ai)) != 0) {
-    server->err = 1;
+    server->err = ERR_OBTAIN_ADDR;
     server->errcode = result;
     return;
   }
@@ -37,21 +37,19 @@ obtain_server_socket (TlcaServer *server)
     server_sock = socket (p->ai_family, p->ai_socktype, p->ai_protocol);
 
     if (server_sock == -1) {
-      fprintf (stderr, "%d: %s\n", server_sock, "Socket FD = -1");
       continue;
     }
 
     // Attempt to set the socket's address to re-usable so the application
     // can re-bind quickly if relaunched
     if (setsockopt (server_sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (yes)) == -1) {
-      fprintf (stderr, "%d: %s\n", server_sock, "setsockopt() failed");
       continue;
     }
 
     // Attempt to bind the socket to the address we can listen on the
     // address later on
     if (bind (server_sock, p->ai_addr, p->ai_addrlen)== -1) {
-      fprintf (stderr, "%d: %s: %s\n", server_sock, "bind() failed", strerror (errno));
+      server->errcode = errno;
       close (server_sock);
       continue;
     }
@@ -62,13 +60,13 @@ obtain_server_socket (TlcaServer *server)
   // If p == NULL, then we looped through past the last valid address, meaning
   // that there was no valid address to bind to
   if (p == NULL) {
-    server->err = 2;
+    server->err = ERR_NO_VALID_ADDR;
     return;
   }
 
   // Attempt to listen for incoming addresses
   if (listen (server_sock, 128) == -1) {
-    server->err = 3;
+    server->err = ERR_LISTENING;
     return;
   }
 
@@ -98,7 +96,7 @@ obtain_epoll_instance (TlcaServer *server)
   epollfd = epoll_create1 (0);
 
   if (epollfd == -1) {
-    server->err = 4;
+    server->err = ERR_OBTAIN_EPOLL;
     server->errcode = errno;
     return;
   }
@@ -108,7 +106,7 @@ obtain_epoll_instance (TlcaServer *server)
   server_event.data.fd = server->server_sock;
 
   if (epoll_ctl (epollfd, EPOLL_CTL_ADD, server->server_sock, &server_event) == -1) {
-    server->err = 5;
+    server->err = ERR_EPOLL_SERVER;
     server->errcode = errno;
     return;
   }

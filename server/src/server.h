@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
@@ -15,6 +17,8 @@
 
 #include <errno.h>
 
+#include "errordefs.h"
+
 typedef struct
 {
   int server_sock;
@@ -26,7 +30,7 @@ typedef struct
   char *listening_addr;
   int listening_port;
 
-  int err;
+  TlcaServerErrors err;
   int errcode;
 } TlcaServer;
 
