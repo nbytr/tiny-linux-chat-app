@@ -19,6 +19,8 @@
 
 #include "errordefs.h"
 
+#include "utility/sockio.h"
+
 typedef struct
 {
   int server_sock;

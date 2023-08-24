@@ -187,12 +187,17 @@ tlca_server_run (TlcaServer *server)
         printf ("Received message!\n");
         uint16_t length = 0;
 
-        recv (events[i].data.fd, &length, 2, 0);
+        if (util_sockio_read_all (events[i].data.fd, 2, (char *)&length) == -1) {
+          printf ("Client disconnected!\n");
+          epoll_ctl (server->epoll_fd, EPOLL_CTL_DEL, client_sock, &events[i]);
+          continue;
+        }
 
         length = ntohs (length);
 
         char *msg = (char *)calloc (length + 1, 1);
-        recv (events[i].data.fd, msg, length, 0);
+        //recv (events[i].data.fd, msg, length, 0);
+        util_sockio_read_all (events[i].data.fd, length, msg);
 
         printf ("Recieved: %s\n", msg);
       }
