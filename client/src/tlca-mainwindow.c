@@ -41,13 +41,21 @@ send_message (GtkWidget *widget, gpointer user_data)
 {
   TlcaMainWindow *self = TLCA_MAIN_WINDOW (user_data);
 
+  GtkEntryBuffer *entry_buffer;
+  entry_buffer = gtk_entry_get_buffer (self->msg_entry);
+
+  if (gtk_entry_buffer_get_length (entry_buffer) < 1) {
+    return;
+  }
+
   GString *tmp;
   tmp = g_string_new (self->nickname);
 
   g_string_append (tmp, ": ");
 
+
   const char *msg =
-    gtk_entry_buffer_get_text (gtk_entry_get_buffer (self->msg_entry));
+    gtk_entry_buffer_get_text (entry_buffer);
 
   g_string_append (tmp, msg);
   g_string_append (tmp, "\n");
@@ -64,6 +72,8 @@ send_message (GtkWidget *widget, gpointer user_data)
 
   g_output_stream_write_all (ostream, &length_n, 2, NULL, NULL, NULL);
   g_output_stream_write_all (ostream, tmp->str, tmp->len, NULL, NULL, NULL);
+
+  gtk_entry_buffer_delete_text (entry_buffer, 0, -1);
 }
 
 typedef enum
@@ -163,6 +173,23 @@ tlca_main_window_class_init (TlcaMainWindowClass *klass)
 }
 
 static void
+msg_entry_text_entered (GtkEntryBuffer *buffer, guint position, gchar *chars,
+                        guint n_chars, gpointer user_data)
+{
+  gtk_widget_set_sensitive (GTK_WIDGET (TLCA_MAIN_WINDOW (user_data)->send_button), true);
+}
+static void
+msg_entry_text_deleted (GtkEntryBuffer *buffer, guint position,
+                        guint n_chars, gpointer user_data)
+{
+  TlcaMainWindow *self = TLCA_MAIN_WINDOW (user_data);
+
+  if (gtk_entry_buffer_get_length (buffer) < 1) {
+    gtk_widget_set_sensitive (GTK_WIDGET (self->send_button), false);
+  }
+}
+
+static void
 tlca_main_window_init (TlcaMainWindow *self)
 {
   self->builder = gtk_builder_new_from_resource ("/org/tlca/client/ui/main-window.ui");
@@ -177,7 +204,13 @@ tlca_main_window_init (TlcaMainWindow *self)
 
   gtk_text_view_set_cursor_visible (self->msg_textview, FALSE);
   gtk_entry_set_max_length (self->msg_entry, 128);
+
   g_signal_connect (self->send_button, "clicked", G_CALLBACK (send_message), self);
+  gtk_widget_set_sensitive (GTK_WIDGET (self->send_button), false);
+
+  g_signal_connect (self->msg_entry, "activate", G_CALLBACK (send_message), self);
+  g_signal_connect_after (gtk_entry_get_buffer (self->msg_entry), "inserted-text", G_CALLBACK (msg_entry_text_entered), self);
+  g_signal_connect_after (gtk_entry_get_buffer (self->msg_entry), "deleted-text", G_CALLBACK (msg_entry_text_deleted), self);
 
   gtk_window_set_child (GTK_WINDOW (self), GTK_WIDGET (self->root_grid));
   gtk_window_set_title (GTK_WINDOW (self), "Chat");

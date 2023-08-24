@@ -58,6 +58,13 @@ attempt_connection (GtkWidget *widget, gpointer user_data)
   // Get the server address and nickname
   GtkEntryBuffer *server_addr_buffer = gtk_entry_get_buffer (self->server_addr_entry);
   GtkEntryBuffer *nickname_buffer = gtk_entry_get_buffer (self->nickname_entry);
+  
+  // Check neither of the buffers are empty
+  if (gtk_entry_buffer_get_length (server_addr_buffer)
+      * gtk_entry_buffer_get_length (nickname_buffer) <= 0) {
+    gtk_label_set_text (self->connstatus_label, "All fields must be filled");
+    return;
+  }
 
   const char *server_addr = gtk_entry_buffer_get_text (server_addr_buffer);
   GString *nickname = g_string_new (gtk_entry_buffer_get_text (nickname_buffer));
@@ -88,6 +95,8 @@ tlca_setup_window_init (TlcaSetupWindow *self)
 
   self->connect_button = GTK_BUTTON (gtk_builder_get_object (self->builder, "connect_button"));
   g_signal_connect (self->connect_button, "clicked", G_CALLBACK (attempt_connection), self);
+
+  gtk_entry_set_max_length (self->nickname_entry, 32);
 
   gtk_window_set_title (GTK_WINDOW (self), "Connect");
   gtk_window_set_resizable (GTK_WINDOW (self), FALSE);
