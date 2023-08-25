@@ -31,7 +31,7 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
 
   gsize bytes_read = -1;
   g_input_stream_read_all (self->conn_input, (char *)&msg_length, 2, &bytes_read, NULL, NULL);
-  if (bytes_read == 0) {
+  if (bytes_read != 2) {
     gtk_label_set_text (self->status_label, "Disconnected from server!");
     gtk_widget_set_sensitive (GTK_WIDGET (self->msg_entry), FALSE);
     gtk_widget_set_sensitive (GTK_WIDGET (self->send_button), FALSE);
@@ -40,9 +40,16 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
 
   msg_length = ntohs (msg_length);
 
-  buffer = g_malloc (msg_length);
+  buffer = g_malloc0 (msg_length);
 
-  g_input_stream_read_all (self->conn_input, buffer, msg_length, NULL, NULL, NULL);
+  bytes_read = -1;
+  g_input_stream_read_all (self->conn_input, buffer, msg_length, &bytes_read, NULL, NULL);
+  if (bytes_read != msg_length) {
+    gtk_label_set_text (self->status_label, "Disconnected from server!");
+    gtk_widget_set_sensitive (GTK_WIDGET (self->msg_entry), FALSE);
+    gtk_widget_set_sensitive (GTK_WIDGET (self->send_button), FALSE);
+    return FALSE;
+  }
 
   GtkTextBuffer *textbuffer;
   textbuffer = gtk_text_view_get_buffer (self->msg_textview);
