@@ -29,7 +29,15 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
   gchar* buffer;
   uint32_t msg_length = 0;
 
-  g_input_stream_read_all (self->conn_input, (char *)&msg_length, 2, NULL, NULL, NULL);
+  gsize bytes_read = -1;
+  g_input_stream_read_all (self->conn_input, (char *)&msg_length, 2, &bytes_read, NULL, NULL);
+  if (bytes_read == 0) {
+    gtk_label_set_text (self->status_label, "Disconnected from server!");
+    gtk_widget_set_sensitive (GTK_WIDGET (self->msg_entry), FALSE);
+    gtk_widget_set_sensitive (GTK_WIDGET (self->send_button), FALSE);
+    return FALSE;
+  }
+
   msg_length = ntohs (msg_length);
 
   buffer = g_malloc (msg_length);
