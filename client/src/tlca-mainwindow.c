@@ -2,14 +2,14 @@
 
 #include "tlca-mainwindow.h"
 
-#include "utility/gsockio.h"
-
 struct _TlcaMainWindow
 {
   GtkApplicationWindow parent_instance;
 
   const char *nickname;
   GSocketConnection *conn;
+  GOutputStream *conn_output;
+  GInputStream *conn_input;
 
   GtkBuilder *builder;
   GtkGrid *root_grid;
@@ -29,12 +29,12 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
   gchar* buffer;
   uint32_t msg_length = 0;
 
-  util_gsockio_read_all (socket, 2, (char *)&msg_length);
+  g_input_stream_read_all (self->conn_input, (char *)&msg_length, 2, NULL, NULL, NULL);
   msg_length = ntohs (msg_length);
 
   buffer = g_malloc (msg_length);
 
-  util_gsockio_read_all (socket, msg_length, buffer);
+  g_input_stream_read_all (self->conn_input, buffer, msg_length, NULL, NULL, NULL);
 
   GtkTextBuffer *textbuffer;
   textbuffer = gtk_text_view_get_buffer (self->msg_textview);
@@ -61,21 +61,17 @@ send_message (GtkWidget *widget, gpointer user_data)
 
   g_string_append (tmp, ": ");
 
-
   const char *msg =
     gtk_entry_buffer_get_text (entry_buffer);
 
   g_string_append (tmp, msg);
   g_string_append (tmp, "\n");
 
-  GOutputStream *ostream;
-  ostream = g_io_stream_get_output_stream (G_IO_STREAM (self->conn));
-
   uint16_t length = strlen (tmp->str);
   uint16_t length_n = htons (length);
 
-  g_output_stream_write_all (ostream, &length_n, 2, NULL, NULL, NULL);
-  g_output_stream_write_all (ostream, tmp->str, strlen (tmp->str), NULL, NULL, NULL);
+  g_output_stream_write_all (self->conn_output, &length_n, 2, NULL, NULL, NULL);
+  g_output_stream_write_all (self->conn_output, tmp->str, strlen (tmp->str), NULL, NULL, NULL);
 
   gtk_entry_buffer_delete_text (entry_buffer, 0, -1);
 }
@@ -105,6 +101,9 @@ tlca_main_window_constructed (GObject *object)
   g_source_set_callback (sock_source, G_SOURCE_FUNC (read_data), self, NULL);
 
   g_source_attach (sock_source, NULL);
+
+  self->conn_output = g_io_stream_get_output_stream (G_IO_STREAM (self->conn));
+  self->conn_input = g_io_stream_get_input_stream (G_IO_STREAM (self->conn));
 
   G_OBJECT_CLASS (tlca_main_window_parent_class)->constructed (object);
 }

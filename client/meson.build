@@ -15,8 +15,6 @@ executable ('tlca',
   'src/tlca-setupwindow.c',
   'src/tlca-mainwindow.c',
 
-  'src/utility/gsockio.c',
-
   res,
   include_directories : include_directories ('src'),
   dependencies : gtkdep)
