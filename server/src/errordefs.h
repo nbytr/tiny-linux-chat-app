@@ -1,7 +1,7 @@
 #pragma once
 
 typedef enum {
-  ERR_OBTAIN_ADDR = 0, // Failed to find addresses to bind to
+  ERR_OBTAIN_ADDR = 1, // Failed to find addresses to bind to
   ERR_NO_VALID_ADDR,   // No valid addresses to bind to
   ERR_LISTENING,       // Failed to listen()
   ERR_OBTAIN_EPOLL,    // Failed to obtain an epoll instance
