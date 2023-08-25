@@ -7,5 +7,6 @@ executable ('tlcaserver',
   'src/main.c',
   'src/server.c',
   'src/utility/sockio.c',
+  'src/utility/intlist.c',
   'src/errordefs.c',
   dependencies : maths_dep)

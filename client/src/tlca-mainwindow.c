@@ -2,6 +2,8 @@
 
 #include "tlca-mainwindow.h"
 
+#include "utility/gsockio.h"
+
 struct _TlcaMainWindow
 {
   GtkApplicationWindow parent_instance;
@@ -19,21 +21,27 @@ struct _TlcaMainWindow
 
 G_DEFINE_TYPE (TlcaMainWindow, tlca_main_window, GTK_TYPE_APPLICATION_WINDOW)
 
-static void
+static gboolean 
 read_data (GSocket *socket, GIOCondition condition, gpointer data)
 {
   TlcaMainWindow *self = TLCA_MAIN_WINDOW (data);
 
-  gchar buffer[128];
+  gchar* buffer;
+  uint32_t msg_length = 0;
 
-  int bytes_received = g_socket_receive (socket, buffer, 128, NULL, NULL);
+  util_gsockio_read_all (socket, 2, (char *)&msg_length);
+  msg_length = ntohs (msg_length);
+
+  buffer = g_malloc (msg_length);
+
+  util_gsockio_read_all (socket, msg_length, buffer);
 
   GtkTextBuffer *textbuffer;
   textbuffer = gtk_text_view_get_buffer (self->msg_textview);
 
-  gtk_text_buffer_insert_at_cursor(textbuffer, buffer, bytes_received);
+  gtk_text_buffer_insert_at_cursor (textbuffer, buffer, msg_length);
 
-  g_print ("Recieved from server: %s\n", buffer);
+  return TRUE;
 }
 
 static void
@@ -60,18 +68,14 @@ send_message (GtkWidget *widget, gpointer user_data)
   g_string_append (tmp, msg);
   g_string_append (tmp, "\n");
 
-  g_print ("Sending: %s\n", tmp->str);
-
   GOutputStream *ostream;
   ostream = g_io_stream_get_output_stream (G_IO_STREAM (self->conn));
 
-  uint16_t length = tmp->len;
+  uint16_t length = strlen (tmp->str);
   uint16_t length_n = htons (length);
 
-  g_print ("Sending length: %d\n", length_n);
-
   g_output_stream_write_all (ostream, &length_n, 2, NULL, NULL, NULL);
-  g_output_stream_write_all (ostream, tmp->str, tmp->len, NULL, NULL, NULL);
+  g_output_stream_write_all (ostream, tmp->str, strlen (tmp->str), NULL, NULL, NULL);
 
   gtk_entry_buffer_delete_text (entry_buffer, 0, -1);
 }
@@ -98,11 +102,9 @@ tlca_main_window_constructed (GObject *object)
   GSource *sock_source;
   sock_source = g_socket_create_source (g_socket_connection_get_socket (self->conn),
                                         G_IO_IN, NULL);
-
   g_source_set_callback (sock_source, G_SOURCE_FUNC (read_data), self, NULL);
 
   g_source_attach (sock_source, NULL);
-
 
   G_OBJECT_CLASS (tlca_main_window_parent_class)->constructed (object);
 }

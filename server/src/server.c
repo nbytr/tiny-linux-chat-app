@@ -1,5 +1,24 @@
 #include "server.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <math.h>
+
+#include <unistd.h>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+
+#include <sys/epoll.h>
+
+#include <errno.h>
+
+#include "utility/sockio.h"
+
 #define PORT 4950
 #define PORTSTR "4950"
 #define MAX_EVENTS 15
@@ -124,6 +143,9 @@ tlca_server_new(int max_connections)
   server->max_events = MAX_EVENTS;
   server->listening_port = PORT;
 
+  server->connections = util_int_list_new (
+      (max_connections == 1) ? max_connections : max_connections / 2);
+
   obtain_server_socket (server);
   if (server->err)
     return server;
@@ -174,8 +196,6 @@ tlca_server_run (TlcaServer *server)
           inet_ntop (AF_INET6, addr, straddr, INET6_ADDRSTRLEN);
           printf (" from %s\n", straddr);
         }
-        // Send a small message
-        send (client_sock, "Hello!", 6, 0);
 
         // Add the socket to the epoll instance
         struct epoll_event client_event;
@@ -183,23 +203,32 @@ tlca_server_run (TlcaServer *server)
         client_event.data.fd = client_sock;
 
         epoll_ctl (server->epoll_fd, EPOLL_CTL_ADD, client_sock, &client_event);
-      } else {
-        printf ("Received message!\n");
-        uint16_t length = 0;
 
-        if (util_sockio_read_all (events[i].data.fd, 2, (char *)&length) == -1) {
-          printf ("Client disconnected!\n");
+        // Add the socket to the connections list
+        util_int_list_add (server->connections, client_sock);
+      } else {
+        uint16_t length = 0;
+        uint16_t length_n = 0;
+
+        if (util_sockio_read_all (events[i].data.fd, 2, (char *)&length_n) == -1) {
           epoll_ctl (server->epoll_fd, EPOLL_CTL_DEL, client_sock, &events[i]);
+          util_int_list_delete (server->connections, events[i].data.fd);
           continue;
         }
 
-        length = ntohs (length);
+        length = ntohs (length_n);
 
         char *msg = (char *)calloc (length + 1, 1);
-        //recv (events[i].data.fd, msg, length, 0);
         util_sockio_read_all (events[i].data.fd, length, msg);
 
         printf ("Recieved: %s\n", msg);
+
+        // Send the message to others
+        for (int j = 0; j < server->connections->size; ++j) {
+          printf ("Sending to %d\n", server->connections->data[j]);
+          util_sockio_send_all (server->connections->data[j], 2, &length_n);
+          util_sockio_send_all (server->connections->data[j], length, msg);
+        }
       }
     }
   }

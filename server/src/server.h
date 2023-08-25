@@ -1,25 +1,8 @@
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
-#include <math.h>
-
-#include <unistd.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-
-#include <sys/epoll.h>
-
-#include <errno.h>
-
 #include "errordefs.h"
 
-#include "utility/sockio.h"
+#include "utility/intlist.h"
 
 typedef struct
 {
@@ -28,6 +11,8 @@ typedef struct
 
   int max_connections;
   int max_events;
+
+  UtilIntList *connections;
 
   char *listening_addr;
   int listening_port;

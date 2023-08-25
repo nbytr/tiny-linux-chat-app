@@ -64,6 +64,6 @@ TlcaApplication *
 tlca_application_new (void)
 {
   return g_object_new (TLCA_TYPE_APPLICATION,
-      "application-id", "org.tlca.client",
+      //"application-id", "org.tlca.client",
       NULL);
 }
