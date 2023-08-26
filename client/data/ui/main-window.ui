@@ -28,16 +28,26 @@
     </child>
 
     <child>
-      <object class="GtkTextView" id="msg_textview">
+      <object class="GtkScrolledWindow">
         <property name="hexpand">true</property>
         <property name="vexpand">true</property>
-        <property name="editable">false</property>
+
         <layout>
           <property name="column">0</property>
           <property name="row">1</property>
           <property name="column-span">8</property>
           <property name="row-span">8</property>
         </layout>
+
+        <child>
+          <object class="GtkTextView" id="msg_textview">
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <property name="editable">false</property>
+            <property name="wrap-mode">GTK_WRAP_WORD</property>
+          </object>
+        </child>
+
       </object>
     </child>
 

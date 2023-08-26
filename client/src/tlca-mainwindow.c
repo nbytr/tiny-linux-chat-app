@@ -56,6 +56,10 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
 
   gtk_text_buffer_insert_at_cursor (textbuffer, buffer, msg_length);
 
+  GtkTextIter enditer;
+  gtk_text_buffer_get_end_iter (textbuffer, &enditer);
+  gtk_text_view_scroll_to_iter (self->msg_textview, &enditer, 0, FALSE, 0, 0);
+
   return TRUE;
 }
 
