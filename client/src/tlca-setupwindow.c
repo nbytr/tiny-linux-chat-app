@@ -47,6 +47,9 @@ connection_attempt_done (GObject *source_object, GAsyncResult *res, gpointer use
 
   TlcaApplication *app = TLCA_APPLICATION (gtk_window_get_application (GTK_WINDOW (self)));
 
+  // Make sure the nickname is null-terminated
+  self->nickname->str[self->nickname->len] = '\0';
+
   g_signal_emit_by_name (app, "connection_made", self->nickname, conn);
 }
 
