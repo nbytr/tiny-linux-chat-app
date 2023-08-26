@@ -38,7 +38,7 @@ util_int_list_delete (UtilIntList *lst, int item)
 {
   for (int i = 0; i < lst->size; ++i) {
     if (lst->data[i] == item) {
-      item = lst->data[lst->size-1];
+      lst->data[i] = lst->data[lst->size-1];
       lst->size--;
       break;
     }

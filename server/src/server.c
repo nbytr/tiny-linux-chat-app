@@ -170,10 +170,10 @@ tlca_server_run (TlcaServer *server)
 
   for (;;) {
     // Block until a connection is made
+    printf ("Polling...\n");
     nfds = epoll_wait (server->epoll_fd, events, MAX_EVENTS, -1);
 
-    for (int i = 0; i < nfds; ++i)
-    {
+    for (int i = 0; i < nfds; ++i) {
       // A connection is ready to be accepted
       if (events[i].data.fd == server->server_sock) {
         // Attempt to accept the connection
@@ -211,8 +211,9 @@ tlca_server_run (TlcaServer *server)
         uint16_t length_n = 0;
 
         if (util_sockio_read_all (events[i].data.fd, 2, (char *)&length_n) == -1) {
-          epoll_ctl (server->epoll_fd, EPOLL_CTL_DEL, client_sock, &events[i]);
+          // Disconnect client
           util_int_list_delete (server->connections, events[i].data.fd);
+          epoll_ctl (server->epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, &events[i]);
           continue;
         }
 
@@ -221,11 +222,8 @@ tlca_server_run (TlcaServer *server)
         char *msg = (char *)calloc (length + 1, 1);
         util_sockio_read_all (events[i].data.fd, length, msg);
 
-        printf ("Recieved: %s\n", msg);
-
         // Send the message to others
         for (int j = 0; j < server->connections->size; ++j) {
-          printf ("Sending to %d\n", server->connections->data[j]);
           util_sockio_send_all (server->connections->data[j], 2, &length_n);
           util_sockio_send_all (server->connections->data[j], length, msg);
         }
