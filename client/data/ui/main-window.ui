@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <object class="GtkGrid" id="root_grid">
-    <property name="column-spacing">12</property>
     <property name="row-spacing">12</property>
 
     <property name="margin-top">12</property>
     <property name="margin-bottom">12</property>
-    <property name="margin-start">12</property>
-    <property name="margin-end">12</property>
 
     <property name="width-request">640</property>
     <property name="height-request">880</property>
@@ -45,6 +42,10 @@
             <property name="vexpand">true</property>
             <property name="editable">false</property>
             <property name="wrap-mode">GTK_WRAP_WORD</property>
+
+            <property name="top-margin">12</property>
+            <property name="left-margin">12</property>
+            <property name="right-margin">12</property>
           </object>
         </child>
 
@@ -54,6 +55,7 @@
     <child>
       <object class="GtkEntry" id="msg_entry">
         <property name="hexpand">true</property>
+        <property name="margin-start">12</property>
         <layout>
           <property name="column">0</property>
           <property name="row">9</property>
@@ -66,6 +68,8 @@
     <child>
       <object class="GtkButton" id="send_button">
         <property name="label">Send</property>
+        <property name="margin-start">12</property>
+        <property name="margin-end">12</property>
         <layout>
           <property name="column">7</property>
           <property name="row">9</property>

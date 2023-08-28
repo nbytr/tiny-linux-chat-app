@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <wchar.h>
 
 #include "tlca-mainwindow.h"
 
@@ -17,6 +18,9 @@ struct _TlcaMainWindow
   GtkTextView *msg_textview;
   GtkEntry *msg_entry;
   GtkButton *send_button;
+
+  GtkTextTag *nickname_tag;
+  GtkTextTag *seperator_tag;
 };
 
 G_DEFINE_TYPE (TlcaMainWindow, tlca_main_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -58,8 +62,19 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
   GtkTextIter enditer;
   gtk_text_buffer_get_end_iter (textbuffer, &enditer);
   gtk_text_buffer_insert (textbuffer, &enditer, buffer, -1);
+  gtk_text_buffer_get_end_iter (textbuffer, &enditer);
   gtk_text_view_scroll_to_iter (self->msg_textview, &enditer, 0, FALSE, 0, 0);
 
+  // Get the location of the nickname as a pair of iterators
+  int linecount = gtk_text_buffer_get_line_count (textbuffer);
+  GtkTextIter iter_start, iter_end;
+  gtk_text_buffer_get_iter_at_line (textbuffer, &iter_start, linecount - 2);
+
+  int offset = g_utf8_strchr (buffer, msg_length, ':') - buffer;
+  gtk_text_buffer_get_iter_at_line_offset (textbuffer, &iter_end, linecount - 2, g_utf8_strlen (buffer, offset));
+
+  // Set the nickname to bold so that it stands out
+  gtk_text_buffer_apply_tag (textbuffer, self->nickname_tag, &iter_start, &iter_end);
   return TRUE;
 }
 
@@ -90,7 +105,7 @@ send_message (GtkWidget *widget, gpointer user_data)
   uint16_t length_n = htons (length);
 
   g_output_stream_write_all (self->conn_output, &length_n, 2, NULL, NULL, NULL);
-  g_output_stream_write_all (self->conn_output, tmp->str, strlen (tmp->str), NULL, NULL, NULL);
+  g_output_stream_write_all (self->conn_output, tmp->str, length, NULL, NULL, NULL);
 
   gtk_entry_buffer_delete_text (entry_buffer, 0, -1);
 }
@@ -218,6 +233,11 @@ tlca_main_window_init (TlcaMainWindow *self)
 
   self->status_label = GTK_LABEL (gtk_builder_get_object (self->builder, "status_label"));
   self->msg_textview = GTK_TEXT_VIEW (gtk_builder_get_object (self->builder, "msg_textview"));
+
+  self->nickname_tag = gtk_text_buffer_create_tag (gtk_text_view_get_buffer (self->msg_textview),
+      "nickname_tag", "weight", 700, NULL);
+  self->seperator_tag = gtk_text_buffer_create_tag (gtk_text_view_get_buffer (self->msg_textview),
+      "seperator_tag", "line-height", 0.5, NULL);
 
   self->msg_entry = GTK_ENTRY (gtk_builder_get_object (self->builder, "msg_entry"));
   self->send_button = GTK_BUTTON (gtk_builder_get_object (self->builder, "send_button"));

@@ -18,7 +18,6 @@ struct _TlcaSetupWindow
   GtkEntry *nickname_entry;
 
   GtkButton *connect_button;
-
 };
 
 G_DEFINE_TYPE (TlcaSetupWindow, tlca_setup_window, GTK_TYPE_APPLICATION_WINDOW);
