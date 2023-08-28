@@ -46,6 +46,7 @@
             <property name="top-margin">12</property>
             <property name="left-margin">12</property>
             <property name="right-margin">12</property>
+            <property name="bottom-margin">12</property>
           </object>
         </child>
 
