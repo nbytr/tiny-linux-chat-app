@@ -19,8 +19,6 @@
 
 #include "utility/sockio.h"
 
-#define PORT 4950
-#define PORTSTR "4950"
 #define MAX_EVENTS 15
 
 static void 
@@ -134,14 +132,14 @@ obtain_epoll_instance (TlcaServer *server)
 }
 
 TlcaServer *
-tlca_server_new(int max_connections)
+tlca_server_new(int port, int max_connections)
 {
   TlcaServer *server;
   server = (TlcaServer *)calloc (sizeof (TlcaServer), 1);
 
   server->max_connections = max_connections;
   server->max_events = MAX_EVENTS;
-  server->listening_port = PORT;
+  server->listening_port = port;
 
   server->connections = util_int_list_new (
       (max_connections == 1) ? max_connections : max_connections / 2);

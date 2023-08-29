@@ -22,7 +22,7 @@ typedef struct
 } TlcaServer;
 
 TlcaServer *
-tlca_server_new (int max_connections);
+tlca_server_new (int port, int max_connections);
 
 int
 tlca_server_run (TlcaServer *server);
