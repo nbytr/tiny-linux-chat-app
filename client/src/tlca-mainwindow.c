@@ -75,6 +75,10 @@ read_data (GSocket *socket, GIOCondition condition, gpointer data)
 
   // Set the nickname to bold so that it stands out
   gtk_text_buffer_apply_tag (textbuffer, self->nickname_tag, &iter_start, &iter_end);
+
+  // Free the buffer used to hold the message
+  g_free (buffer);
+
   return TRUE;
 }
 
